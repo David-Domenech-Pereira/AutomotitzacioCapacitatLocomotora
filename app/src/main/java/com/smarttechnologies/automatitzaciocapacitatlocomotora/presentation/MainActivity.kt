@@ -42,7 +42,13 @@ class MainActivity : ComponentActivity() {
             val intent = Intent(this, Cadira::class.java)
             startActivity(intent)
         }
-
+        val button2: Button = findViewById(R.id.button2);
+        button2.setOnClickListener{
+            val intent = Intent(this, Balance::class.java)
+            startActivity(intent)
+        }
+        println("AAAAAAAAAAAAAAA")
+        startService(Intent(this, WalkingSpeedService::class.java))
     }
 
 }

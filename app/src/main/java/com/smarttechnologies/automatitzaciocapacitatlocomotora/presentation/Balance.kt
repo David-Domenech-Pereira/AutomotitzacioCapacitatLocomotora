@@ -13,7 +13,6 @@ import android.os.Vibrator
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.ComponentActivity
-import androidx.compose.ui.res.stringResource
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.smarttechnologies.automatitzaciocapacitatlocomotora.R
@@ -22,7 +21,7 @@ import java.io.FileWriter
 import java.text.SimpleDateFormat
 import java.util.Date
 
-class Cadira : ComponentActivity() {
+class Balance : ComponentActivity() {
     //variables necessàries per l'acceleròmetre
     private lateinit var sensorManager: SensorManager
     private var accelerometer: Sensor? = null
@@ -37,8 +36,8 @@ class Cadira : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
 
-        guardarDatos("Start","accelerometre_cadira") //indiquem que comença a mesurar
-        guardarDatos("Start","hr_cadira") //comença a mesurar
+        guardarDatos("Start","accelerometre_equilibri") //indiquem que comença a mesurar
+        guardarDatos("Start","hr_equilibri") //comença a mesurar
         tiempoInicio = System.currentTimeMillis()// contem el temps desde que s'ha iniciat
         setContentView(R.layout.cadira);
         //inicialitzem
@@ -47,7 +46,7 @@ class Cadira : ComponentActivity() {
 
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         textView = findViewById(R.id.textView)
-        textView.text = "Aixeca't de la cadira"
+        textView.text = "Prova iniciada"
 
         sensorEventListener = object : SensorEventListener {
             override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {
@@ -62,7 +61,7 @@ class Cadira : ComponentActivity() {
                 val datos = "$x;$y;$z;" //posem les dades separades per ;
 
                 println(datos); //printegem les dades
-                guardarDatos(datos,"accelerometre_cadira");
+                guardarDatos(datos,"accelerometre_equilibri");
             }
         }
 
@@ -78,7 +77,7 @@ class Cadira : ComponentActivity() {
                     val heartRate = event.values[0].toInt()
 
                     println("Hr: $heartRate")
-                    guardarDatos(heartRate.toString(),"hr_cadira") //guardem les dades
+                    guardarDatos(heartRate.toString(),"hr_equilibri") //guardem les dades
                     if(heartRate>max_hr){
                         //guardem el heart rate máxim
                         max_hr = heartRate
@@ -111,8 +110,8 @@ class Cadira : ComponentActivity() {
         sensorManager.unregisterListener(sensorEventListener_hr)
         vibrarReloj() //fem que vibri
         //guardem les dades
-        guardarDatos("End","accelerometre_cadira")
-        guardarDatos("End","hr_cadira")
+        guardarDatos("End","accelerometre_equilibri")
+        guardarDatos("End","hr_equilibri")
         //posem un missatge
         textView.text = "Test finalitzat"
         boton.text = "Tornar a l'inici"
@@ -152,6 +151,4 @@ class Cadira : ComponentActivity() {
             vibrator.vibrate(pattern, -1)
         }
     }
-
-
 }

@@ -12,9 +12,24 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
         android:layout_marginStart="18dp"
-        android:layout_marginTop="55dp"
+        android:layout_marginTop="22dp"
         android:layout_marginEnd="20dp"
-        android:layout_marginBottom="62dp"
+        android:layout_marginBottom="95dp"
         android:text="Test Aixecar-se"
+        android:textSize="12sp" />
+
+    <Button
+        android:id="@+id/button2"
+        android:layout_width="189dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="18dp"
+        android:layout_marginTop="98dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="19dp"
+        android:text="Test Equilibri"
         android:textSize="12sp" />
 </RelativeLayout>
