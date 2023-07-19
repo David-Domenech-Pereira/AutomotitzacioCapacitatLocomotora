@@ -13,7 +13,7 @@ import java.io.FileWriter
 import java.text.SimpleDateFormat
 import java.util.Date
 
-class WalkingSpeedService : Service(), SensorEventListener {
+class WalkingSpeedService : Service() {
     private lateinit var sensorManager: SensorManager
     private var accelerometer: Sensor? = null
     private var stepCounter: Sensor? = null
@@ -23,7 +23,9 @@ class WalkingSpeedService : Service(), SensorEventListener {
     private var walkingSpeed: Double = 0.0
     private var avgWalkingSpeed: Double = -1.0
     private var tiempoInicio: Long = 0
-
+    private lateinit var sensorEventListener_step_counter: SensorEventListener
+    private lateinit var sensorEventListener_accelerometer: SensorEventListener
+    private lateinit var sensorEventListener_step_detect: SensorEventListener
     override fun onCreate() {
         super.onCreate()
 
@@ -39,6 +41,7 @@ class WalkingSpeedService : Service(), SensorEventListener {
 
         if (accelerometer == null || stepCounter == null || stepDetector == null) {
             println("No hi ha sensors")
+
         } else {
             // Inicia el seguimiento
 
@@ -59,28 +62,78 @@ class WalkingSpeedService : Service(), SensorEventListener {
 
     private fun startTracking() {
         lastStepTime = System.currentTimeMillis()
-        sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL)
-        sensorManager.registerListener(this, stepCounter, SensorManager.SENSOR_DELAY_NORMAL)
-        sensorManager.registerListener(this, stepDetector, SensorManager.SENSOR_DELAY_NORMAL)
+        sensorEventListener_step_counter = object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent) {
+                // Actualiza el contador de pasos desde el sensor
+                if (stepCount == 0) {
+                    stepCount = event.values[0].toInt()
+                }
+                guardarDatos(event.values[0].toString(),"STEPS")
+            }
+
+            override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
+                //done
+            }
+        }
+        sensorEventListener_step_detect = object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent) {
+                stepCount++
+                guardarDatos(stepCount.toString(),"STEP")
+            }
+
+            override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
+                //done
+            }
+        }
+        sensorEventListener_accelerometer = object : SensorEventListener{
+            override fun onSensorChanged(event: SensorEvent) {
+                val currentTime = System.currentTimeMillis()
+                val elapsedTime = currentTime - lastStepTime
+                val x = event.values[0]
+                val y = event.values[1]
+                val z = event.values[2]
+
+
+                val datos = "$x;$y;$z;" //posem les dades separades per ;
+
+                println(datos); //printegem les dades
+                guardarDatos(datos,"accelerometre");
+            }
+
+            override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
+                //done
+            }
+
+        }
+        sensorManager.registerListener(sensorEventListener_accelerometer, accelerometer, SensorManager.SENSOR_DELAY_NORMAL)
+        sensorManager.registerListener(sensorEventListener_step_counter, stepCounter, SensorManager.SENSOR_DELAY_NORMAL)
+        sensorManager.registerListener(sensorEventListener_step_detect, stepDetector, SensorManager.SENSOR_DELAY_NORMAL)
     }
 
     private fun stopTracking() {
-        sensorManager.unregisterListener(this)
+      //  sensorManager.unregisterListener(sensorEventListener_accelerometer)
         //guardamos la velocidad
-        guardarDatos(avgWalkingSpeed.toString(),"walkingSpeed_")
+
         println("Stop tracking")
     }
     private fun guardarDatos(datos: String, type:String) {
-        val tiempoActual = System.currentTimeMillis() - tiempoInicio
+        val tiempoActual = System.currentTimeMillis()
         val formatoFecha = SimpleDateFormat("yyyy-MM-dd")
         val fechaActual = formatoFecha.format(Date())
-        val nombreArchivo = "$type$fechaActual.txt"
+        val nombreArchivo = "$fechaActual.txt"
+        var tipus = ""
         val directorio = filesDir // Obtén el directorio de archivos de la aplicación
-
+        if(type=="hr"){
+            tipus = "HR"
+        }else if(type=="accelerometre"){
+            tipus = "ACC"
+        }else{
+            tipus = type
+        }
         try {
             val archivo = File(directorio, nombreArchivo)
             val escritor = FileWriter(archivo, true) // Usar "true" para habilitar el modo de anexar
-            escritor.append("$tiempoActual;$datos\n")
+            escritor.append("$tiempoActual;PASSIVE_$tipus;$datos\n")
             escritor.flush()
             escritor.close()
             // Archivo guardado exitosamente
@@ -89,11 +142,9 @@ class WalkingSpeedService : Service(), SensorEventListener {
             // Ocurrió un error al guardar el archivo
         }
     }
-    override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {
-        // No se utiliza en este caso
-    }
 
-    override fun onSensorChanged(event: SensorEvent) {
+
+    fun onSensorChanged(event: SensorEvent) {
 
         // Código para el seguimiento de los pasos y el cálculo de la velocidad de caminata
         when (event.sensor.type) {
@@ -108,7 +159,7 @@ class WalkingSpeedService : Service(), SensorEventListener {
                 val datos = "$x;$y;$z;" //posem les dades separades per ;
 
                 println(datos); //printegem les dades
-                guardarDatos(datos,"accelerometre_passiu");
+                guardarDatos(datos,"accelerometre");
 
             }
             Sensor.TYPE_STEP_COUNTER -> {
@@ -116,37 +167,20 @@ class WalkingSpeedService : Service(), SensorEventListener {
                 if (stepCount == 0) {
                     stepCount = event.values[0].toInt()
                 }
+                guardarDatos(event.values[0].toString(),"STEPS")
             }
             Sensor.TYPE_STEP_DETECTOR -> {
                 // Incrementa el contador de pasos por cada evento de detección de paso
-                val currentTime = System.currentTimeMillis()
+
                 stepCount++
-                lastStepTime = currentTime
+                guardarDatos(stepCount.toString(),"STEP")
             }
         }
 
-        // Calcula la velocidad de caminata (en metros por segundo)
-        walkingSpeed = calculateWalkingSpeed(stepCount)
-        if(walkingSpeed>0.0) {
-            if (avgWalkingSpeed <= 0) {
-                //la asignamos
-                avgWalkingSpeed = walkingSpeed
-            } else {
-                avgWalkingSpeed = (avgWalkingSpeed + walkingSpeed) / 2 //hacemos el promedio
-            }
-            println(avgWalkingSpeed)
-        }
+
     }
 
-    private fun calculateWalkingSpeed(stepCount: Int): Double {
-        // Cálculo de la velocidad de caminata
-        val distanceInMeters = stepCount * 1.5 //TODO ajustar
-        val elapsedTimeInSeconds = (System.currentTimeMillis() - lastStepTime) / 1000.0
-        if(elapsedTimeInSeconds==0.0){
-            return -1.0
-        }
-        return distanceInMeters / elapsedTimeInSeconds
-    }
+
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
